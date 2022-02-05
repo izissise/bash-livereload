@@ -1,12 +1,9 @@
-#TODO lighter baseimage
-#TODO publish git/docker repo
-#TODO blog use gpt-3
 # Build
 # docker build -t docker build -t izissise/bash-livereload .
 # Run
 # docker run --rm -ti --name 'bash-livereload' -p 8080:8080 -p 34729:34729 -v 'RENDERED_STATIC_HTML_PATH:/www' izissise/bash-livereload
 
-FROM ubuntu:bionic
+FROM alpine:latest
 
 ARG LIVERELOADJS_VERSION=3.3.3
 ARG WEBSOCAT_VERSION=1.9.0
@@ -17,15 +14,11 @@ EXPOSE 8080/tcp
  # Websocket livereload
 EXPOSE 34729/tcp
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y \
-        jq \
-        socat \
-        inotify-tools \
-      && \
-    apt-get autoremove --purge -y && \
-    apt-get -y clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+      bash \
+      jq \
+      socat \
+      inotify-tools
 
 # Live reload client
 ADD "https://raw.githubusercontent.com/livereload/livereload-js/v${LIVERELOADJS_VERSION}/dist/livereload.min.js" livereload.js

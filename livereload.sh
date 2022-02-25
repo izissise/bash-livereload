@@ -5,15 +5,15 @@ set -euo pipefail
 HTTP_LISTEN_PORT="${HTTP_LISTEN_PORT:="8080"}"  # miniserve listenport
 WS_LISTEN_PORT="${WS_LISTEN_PORT:="34729"}"     # websocat listenport
 INDEX_HTML="${INDEX_HTML:="index.html"}"        # miniserve index
-LIVERELOAD="${LIVERELOAD:=true}"                # Active livereload on file modification
-SPA="${SPA:=true}"                              # Activate Single Page Application mode
-QRCODE="${QRCODE:=true}"                        # Enable QR code display
+LIVERELOAD="${LIVERELOAD:=true}"                # livereload on file modification
+SPA="${SPA:=true}"                              # Single Page Application mode
+QRCODE="${QRCODE:=false}"                       # Enable QR code display
 
-# Path option
+# Path options
 WWW_PATH="${WWW_PATH:="./www"}"                                   # Directory contains web source
-LIVERELOADJS_PATH="${LIVERELOADJS_PATH:="./livereload.js"}"       # Directory contains web source
+LIVERELOADJS_PATH="${LIVERELOADJS_PATH:="./livereload.js"}"       # Path to livereload.js
 
-INTERNAL_SERVE_PATH="${INTERNAL_SERVE_PATH:="./blivereloadserv"}" # Serve from this dir with added livereload on *.html
+INTERNAL_SERVE_PATH="${INTERNAL_SERVE_PATH:="./blivereloadserv"}" # Tmp dir include livereload.js on *.html
 
 main() {
   local miniserve_pid=""
@@ -28,15 +28,17 @@ main() {
     set -euo pipefail
 
     cmd_reload() {
+      # Build json reload command
       jq -crn \
         --arg command 'reload' \
-        --arg path "${1:-/}" \
+        --arg path "${1:-"/"}" \
         --arg liveCSS "${2:-true}" \
         --arg reloadMissingCSS "${3:-true}" \
         --arg liveIMG "${4:-true}" \
           '. | .["command"]=$command | .["path"]=$path | .["liveCSS"]=$liveCSS | .["reloadMissingCSS"]=$reloadMissingCSS | .["liveIMG"]=$liveIMG'
     }
     cmd_hello() {
+      # Build json hello command
       jq -crn \
         --arg command 'hello' \
         --arg serverName "${1:-"dwl-reloader"}" \
@@ -44,7 +46,6 @@ main() {
           '. | .["command"]=$command | .["serverName"]=$serverName | .["protocols"]=[$protocols]'
     }
 
-    export -f cmd_reload
     # SIGUSR1 => reload event
     trap cmd_reload SIGUSR1;
 

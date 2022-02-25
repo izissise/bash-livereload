@@ -7,7 +7,9 @@ WS_LISTEN_PORT="${WS_LISTEN_PORT:="34729"}"     # websocat listenport
 INDEX_HTML="${INDEX_HTML:="index.html"}"        # miniserve index
 LIVERELOAD="${LIVERELOAD:=true}"                # livereload on file modification
 SPA="${SPA:=true}"                              # Single Page Application mode
-QRCODE="${QRCODE:=false}"                       # Enable QR code display
+QRCODE="${QRCODE:=true}"                        # Enable QR code display
+
+WATCH_EXCLUDE_RE=${WATCH_EXCLUDE_RE:=".kate-swp"}
 
 # Path options
 WWW_PATH="${WWW_PATH:="./www"}"                                   # Directory contains web source
@@ -16,7 +18,6 @@ LIVERELOADJS_PATH="${LIVERELOADJS_PATH:="./livereload.js"}"       # Path to live
 INTERNAL_SERVE_PATH="${INTERNAL_SERVE_PATH:="./blivereloadserv"}" # Tmp dir include livereload.js on *.html
 
 main() {
-  local miniserve_pid=""
   local should_livereload="$LIVERELOAD"
   local miniserve_args=()
   "$SPA" && miniserve_args+=("--spa")
@@ -77,40 +78,48 @@ main() {
           # Patch livereload
           patch_livereload
       fi
-
-      # Run http server
-      miniserve "${miniserve_args[@]}" --port "$HTTP_LISTEN_PORT" --index "${INDEX_HTML}" "$INTERNAL_SERVE_PATH" &
-      if [ "$should_livereload" = "true" ]; then
-          sleep 0.1
-          # Send signal to websocket servers
-          pkill -USR1 -fx '/bin/bash -c ws_server' || true
-      fi
   }
 
+  signal_websockets() {
+    # Send signal to websocket servers
+    pkill -USR1 -fx '/bin/bash -c ws_server' || true
+  }
+
+  # Run http server
+  bootstrap
+  miniserve "${miniserve_args[@]}" --port "$HTTP_LISTEN_PORT" --index "${INDEX_HTML}" "$INTERNAL_SERVE_PATH" &
   if [ "$should_livereload" = "true" ]; then
       # Start websocat to spawn ws_server func on each new client
       (socat TCP-LISTEN:11111,reuseaddr,fork,crlf exec:"/bin/bash -c ws_server") &
       (websocat --exit-on-eof --text "ws-listen:0.0.0.0:${WS_LISTEN_PORT}" tcp:127.0.0.1:11111) &
-  fi
 
-  while true; do
-      bootstrap
-      sleep 0.1
-      # Build file watch list
-      readarray -d $'\0' -t watch_arr < <(find "$WWW_PATH" -print0)
       printf '%b%s%b' "\e[34m" "Waiting for file changes" "\e[0m\n"
-      inotifywait -e modify "${watch_arr[@]}" > /dev/null 2>&1
-      sleep 0.6
-      printf '%b%s%b' "\e[34m" "File modified restarting" "\e[0m\n"
-      pkill -TERM "miniserve"
-  done
+
+      local last_upload_ms="0"
+      inotifywait -q -m --format '%w%f' -e modify -r "${WWW_PATH}" \
+        | while read -r file; do
+            if [[ "$file" =~ "$WATCH_EXCLUDE_RE" ]]; then
+                continue
+            fi
+            # echo "$file" >&2
+            local now_ms="$(date +%s)"
+            # Only reload every second
+            if [ $(($now_ms - $last_upload_ms)) -gt 1 ]; then
+                printf "%b%s%b" "\e[34m" "File $file modified reloading" "\e[0m\n" >&2
+                bootstrap
+                signal_websockets
+                last_upload_ms="$now_ms"
+            fi
+        done
+  fi
+  wait || true
 }
 
 exist() {
     command -v "$1" >/dev/null 2>&1 || { printf >&2 "%s\n" "$1 is required but it's not installed."; exit 1; }
 }
 
-for c in jq find grep miniserve websocat cp socat inotifywait mkdir pkill; do
+for c in jq find sed miniserve websocat cp socat inotifywait mkdir pkill; do
   exist "$c"
 done
 

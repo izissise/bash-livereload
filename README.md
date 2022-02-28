@@ -16,10 +16,8 @@
 
 There are many ways to reload a webpage when doing web development, It usually uses the framework provided tool (webpack, hugo, ...), they all use [livereload.js](https://github.com/livereload/livereload-js) on the browser side.
 
-livereloadjs-bash is a shell script that uses [miniserve](miniserve), [websocat]() and [inotify-tools]() to implement minimal livereloadjs server.
+livereloadjs-bash is a shell script that uses [miniserve](https://github.com/svenstaro/miniserve/), [websocat](https://github.com/vi/websocat) and [inotify-tools](https://github.com/inotify-tools/inotify-tools) to implement a minimal livereloadjs server.
 
-
-![Alt text](./birdview.svg?sanitize=true)
 <img src="./birdview.svg?sanitize=true">
 
 

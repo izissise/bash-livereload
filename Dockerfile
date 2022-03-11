@@ -9,6 +9,9 @@ ARG LIVERELOADJS_VERSION=3.3.3
 ARG WEBSOCAT_VERSION=1.9.0
 ARG MINISERVE_VERSION=0.18.0
 
+LABEL description="Reload your webpages using unix tools" \
+      maintainer="Hugues Morisset <morisset.hugues@gmail.com>"
+
 # Static files
 EXPOSE 8080/tcp
 # livereloadjs Websocket

@@ -5,9 +5,9 @@
 
 FROM alpine:latest
 
-ARG LIVERELOADJS_VERSION=3.3.3
-ARG WEBSOCAT_VERSION=1.9.0
-ARG MINISERVE_VERSION=0.18.0
+ARG LIVERELOADJS_VERSION=3.4.1
+ARG WEBSOCAT_VERSION=1.11.0
+ARG MINISERVE_VERSION=0.22.0
 
 LABEL description="Reload your webpages using unix tools" \
       maintainer="Hugues Morisset <morisset.hugues@gmail.com>"
@@ -27,11 +27,11 @@ RUN apk add --no-cache \
 ADD "https://raw.githubusercontent.com/livereload/livereload-js/v${LIVERELOADJS_VERSION}/dist/livereload.min.js" livereload.js
 
 # websocat
-ADD "https://github.com/vi/websocat/releases/download/v${WEBSOCAT_VERSION}/websocat_linux64" /bin/websocat
+ADD "https://github.com/vi/websocat/releases/download/v${WEBSOCAT_VERSION}/websocat.x86_64-unknown-linux-musl" /bin/websocat
 RUN chmod +x /bin/websocat
 
 # miniserve
-ADD "https://github.com/svenstaro/miniserve/releases/download/v${MINISERVE_VERSION}/miniserve-v${MINISERVE_VERSION}-x86_64-unknown-linux-musl" /bin/miniserve
+ADD "https://github.com/svenstaro/miniserve/releases/download/v${MINISERVE_VERSION}/miniserve-${MINISERVE_VERSION}-x86_64-unknown-linux-musl" /bin/miniserve
 RUN chmod +x /bin/miniserve
 
 # Server script

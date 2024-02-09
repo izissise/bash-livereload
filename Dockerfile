@@ -5,9 +5,9 @@
 
 FROM alpine:latest
 
-ARG LIVERELOADJS_VERSION=3.4.1
-ARG WEBSOCAT_VERSION=1.11.0
-ARG MINISERVE_VERSION=0.22.0
+ARG LIVERELOADJS_VERSION=4.0.2
+ARG WEBSOCAT_VERSION=1.12.0
+ARG MINISERVE_VERSION=0.26.0
 
 LABEL description="Reload your webpages using unix tools" \
       maintainer="Hugues Morisset <morisset.hugues@gmail.com>"
